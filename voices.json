@@ -1,0 +1,98 @@
+[
+  {
+    "Value": "zh-CN-XiaoxiaoNeural",
+    "DisplayName": "晓晓 (中文-普通话-女)"
+  },
+  {
+    "Value": "zh-CN-XiaoyiNeural",
+    "DisplayName": "晓依 (中文-普通话-女)"
+  },
+  {
+    "Value": "zh-CN-YunjianNeural",
+    "DisplayName": "云健 (中文-普通话-男)"
+  },
+  {
+    "Value": "zh-CN-YunyangNeural",
+    "DisplayName": "云扬 (中文-普通话-新闻-男)"
+  },
+  {
+    "Value": "zh-CN-YunxiaNeural",
+    "DisplayName": "云夏 (中文-普通话-儿童-男)"
+  },
+  {
+    "Value": "zh-CN-YunxiNeural",
+    "DisplayName": "云希 (中文-普通话-男)"
+  },
+  {
+    "Value": "zh-HK-HiuGaaiNeural",
+    "DisplayName": "曉佳 (中文-廣東話-女)"
+  },
+  {
+    "Value": "zh-HK-HiuMaanNeural",
+    "DisplayName": "曉曼 (中文-廣東話-女)"
+  },
+  {
+    "Value": "zh-HK-WanLungNeural",
+    "DisplayName": "雲龍 (中文-廣東話-男)"
+  },
+  {
+    "Value": "zh-TW-HsiaoChenNeural",
+    "DisplayName": "曉臻 (中文-國語-女)"
+  },
+  {
+    "Value": "zh-TW-HsiaoYuNeural",
+    "DisplayName": "曉雨 (中文-國語-女)"
+  },
+  {
+    "Value": "zh-TW-YunJheNeural",
+    "DisplayName": "雲哲 (中文-國語-男)"
+  },
+  {
+    "Value": "ja-JP-NanamiNeural",
+    "DisplayName": "七海 (日本語-女)"
+  },
+  {
+    "Value": "ja-JP-KeitaNeural",
+    "DisplayName": "庆太 (日本語-男)"
+  },
+  {
+    "Value": "en-US-AriaNeural",
+    "DisplayName": "Aria (English-American-Female)"
+  },
+  {
+    "Value": "en-US-JennyNeural",
+    "DisplayName": "Jenny (English-American-Female)"
+  },
+  {
+    "Value": "en-US-AnaNeural",
+    "DisplayName": "Ana (English-American-Child-Female)"
+  },
+  {
+    "Value": "en-US-MichelleNeural",
+    "DisplayName": "Michelle (English-American-Female)"
+  },
+  {
+    "Value": "en-US-GuyNeural",
+    "DisplayName": "Guy (English-American-Male)"
+  },
+  {
+    "Value": "en-US-ChristopherNeural",
+    "DisplayName": "Christopher (English-American-Male)"
+  },
+  {
+    "Value": "en-US-EricNeural",
+    "DisplayName": "Eric (English-American-Male)"
+  },
+  {
+    "Value": "en-US-RogerNeural",
+    "DisplayName": "Roger (English-American-Male)"
+  },
+  {
+    "Value": "en-US-SteffanNeural",
+    "DisplayName": "Steffan (English-American-Male)"
+  },
+  {
+    "Value": "en-GB-SoniaNeural",
+    "DisplayName": "Sonia (English-Britain-Female)"
+  }
+]

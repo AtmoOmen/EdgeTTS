@@ -9,6 +9,22 @@ namespace EdgeTTS;
 
 public sealed partial class EdgeTTSEngine
 {
+    private static Voice[]? voices;
+    
+    /// <summary>
+    /// 所有可用的语音列表
+    /// </summary>
+    public static Voice[] Voices 
+    {
+        get
+        {
+            if (voices != null)
+                return voices;
+
+            return voices = LoadVoicesFromJSON();
+        } 
+    }
+    
     /// <summary>
     /// 同步播放指定文本的语音
     /// </summary>

@@ -23,4 +23,10 @@
     <PackageReference Include="System.Net.WebSockets.Client.Managed" Version="1.0.22" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="voices.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
