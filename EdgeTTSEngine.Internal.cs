@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Security;
 using System.Security.Cryptography;
 using System.Text;
@@ -11,11 +12,11 @@ namespace EdgeTTS;
 
 public sealed partial class EdgeTTSEngine
 {
-    private static Voice[] LoadVoicesFromJSON()
+    private Voice[] LoadVoicesFromJSON()
     {
         try
         {
-            var jsonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "voices.json");
+            var jsonPath = Path.Combine(VoiceFolder, "voices.json");
             if (!File.Exists(jsonPath))
                 throw new FileNotFoundException($"语音配置文件未找到: {jsonPath}");
 

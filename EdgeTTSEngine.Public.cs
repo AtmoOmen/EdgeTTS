@@ -9,12 +9,12 @@ namespace EdgeTTS;
 
 public sealed partial class EdgeTTSEngine
 {
-    private static Voice[]? voices;
+    private Voice[]? voices;
     
     /// <summary>
     /// 所有可用的语音列表
     /// </summary>
-    public static Voice[] Voices 
+    public Voice[] Voices
     {
         get
         {
