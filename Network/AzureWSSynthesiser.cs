@@ -1,7 +1,7 @@
 using System.Net.WebSockets;
 using System.Text;
 
-namespace EdgeTTS;
+namespace EdgeTTS.Network;
 
 internal static class AzureWSSynthesiser
 {
@@ -13,10 +13,10 @@ internal static class AzureWSSynthesiser
     private static class PathConstants
     {
         public const string SPEECH_CONFIG = "Path:speech.config";
-        public const string SSML = "Path:ssml";
-        public const string TURN_START = "Path:turn.start";
-        public const string TURN_END = "Path:turn.end";
-        public const string AUDIO = "Path:audio";
+        public const string SSML          = "Path:ssml";
+        public const string TURN_START    = "Path:turn.start";
+        public const string TURN_END      = "Path:turn.end";
+        public const string AUDIO         = "Path:audio";
     }
 
     private enum ProtocolState
@@ -197,7 +197,7 @@ internal static class AzureWSSynthesiser
                     
                         if (result.EndOfMessage)
                         {
-                            await HandleBinaryMessageAsync(messageBuffer.ToArray(), requestId, state, buffer).ConfigureAwait(false);
+                            await HandleBinaryMessageAsync(messageBuffer.ToArray(), requestId, buffer).ConfigureAwait(false);
                             state = ProtocolState.Streaming;
                             messageBuffer.Clear();
                         }
@@ -308,17 +308,14 @@ internal static class AzureWSSynthesiser
         return Task.FromResult(state switch
         {
             ProtocolState.NotStarted when message.Contains(PathConstants.TURN_START) => ProtocolState.TurnStarted,
-            ProtocolState.TurnStarted when message.Contains(PathConstants.TURN_END) =>
-                throw new IOException("Unexpected turn.end"),
-            ProtocolState.Streaming when message.Contains(PathConstants.TURN_END) => state,
-            _                                                                     => state
+            ProtocolState.TurnStarted when message.Contains(PathConstants.TURN_END)  => throw new IOException("Unexpected turn.end"),
+            _                                                                        => state
         });
     }
 
     private static async Task HandleBinaryMessageAsync(
-        byte[] data,
-        string requestId,
-        ProtocolState state,
+        byte[]       data,
+        string       requestID,
         MemoryStream buffer)
     {
         if (data.Length < 2)
@@ -332,7 +329,7 @@ internal static class AzureWSSynthesiser
         if (!header.EndsWith($"{PathConstants.AUDIO}\r\n"))
             return;
 
-        if (!header.Contains(requestId))
+        if (!header.Contains(requestID))
             throw new IOException("Unexpected request id during streaming");
 
         await buffer.WriteAsync(data.AsMemory(2 + headerLen)).ConfigureAwait(false);

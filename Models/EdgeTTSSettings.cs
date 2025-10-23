@@ -1,4 +1,4 @@
-namespace EdgeTTS;
+namespace EdgeTTS.Models;
 
 public class EdgeTTSSettings
 {

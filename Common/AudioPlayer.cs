@@ -1,6 +1,6 @@
 using NAudio.Wave;
 
-namespace EdgeTTS;
+namespace EdgeTTS.Common;
 
 public class AudioPlayer : IAsyncDisposable
 {
@@ -59,7 +59,7 @@ public class AudioPlayer : IAsyncDisposable
 
     private void WaveOut_PlaybackStopped(object? sender, StoppedEventArgs e)
     {
-        PlayStateChanged?.Invoke(this, new PlayStateChangedEventArgs(WMPPlayState.wmppsStopped));
+        PlayStateChanged?.Invoke(this, new PlayStateChangedEventArgs(WMPPlayState.Stopped));
         playbackStarted.TrySetResult(false);
     }
 
@@ -88,7 +88,7 @@ public class AudioPlayer : IAsyncDisposable
         {
             waveOut.Init(audioFile);
             waveOut.Play();
-            PlayStateChanged?.Invoke(this, new PlayStateChangedEventArgs(WMPPlayState.wmppsPlaying));
+            PlayStateChanged?.Invoke(this, new PlayStateChangedEventArgs(WMPPlayState.Playing));
             playbackStarted.TrySetResult(true);
 
             // 等待音频播放完成或取消
@@ -121,29 +121,24 @@ public class AudioPlayer : IAsyncDisposable
     }
 }
 
-public class PlayStateChangedEventArgs : EventArgs
+public class PlayStateChangedEventArgs(WMPPlayState playState) : EventArgs
 {
-    public WMPPlayState PlayState { get; }
-
-    public PlayStateChangedEventArgs(WMPPlayState playState)
-    {
-        PlayState = playState;
-    }
+    public WMPPlayState PlayState { get; } = playState;
 }
 
 public enum WMPPlayState
 {
-    wmppsUndefined = 0,
-    wmppsStopped = 1,
-    wmppsPaused = 2,
-    wmppsPlaying = 3,
-    wmppsScanForward = 4,
-    wmppsScanBackward = 5,
-    wmppsBuffering = 6,
-    wmppsWaiting = 7,
-    wmppsMediaEnded = 8,
-    wmppsTransitioning = 9,
-    wmppsReady = 10,
-    wmppsReconnecting = 11,
-    wmppsLast = 12
+    Undefined     = 0,
+    Stopped       = 1,
+    Paused        = 2,
+    Playing       = 3,
+    ScanForward   = 4,
+    ScanBackward  = 5,
+    Buffering     = 6,
+    Waiting       = 7,
+    MediaEnded    = 8,
+    Transitioning = 9,
+    Ready         = 10,
+    Reconnecting  = 11,
+    Last          = 12
 }

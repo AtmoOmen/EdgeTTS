@@ -1,7 +1,7 @@
 using System.Net.Sockets;
 using System.Net.WebSockets;
 
-namespace EdgeTTS;
+namespace EdgeTTS.Network;
 
 internal static class EdgeTTSWebSocket
 {

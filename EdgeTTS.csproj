@@ -18,18 +18,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <COMReference Include="WMPLib">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>0</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>6bf52a50-394a-11d3-b153-00c04f79faa6</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="System.Diagnostics.Process" Version="4.3.0" />
     <PackageReference Include="System.Net.WebSockets.Client.Managed" Version="1.0.22" />

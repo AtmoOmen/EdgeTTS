@@ -1,9 +1,9 @@
 using System.Numerics;
 using System.Text;
 
-namespace EdgeTTS;
+namespace EdgeTTS.Common;
 
-internal static class Utils
+internal static class Extension
 {
     private const string Alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -19,12 +19,5 @@ internal static class Utils
         }
 
         return builder.ToString();
-    }
-
-    public static T Clamp<T>(this T val, T min, T max) where T : IComparable<T>
-    {
-        if (val.CompareTo(min) < 0) return min;
-        if (val.CompareTo(max) > 0) return max;
-        return val;
     }
 }
