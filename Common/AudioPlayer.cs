@@ -11,15 +11,15 @@ public class AudioPlayer : IAsyncDisposable
 
     public event EventHandler<PlayStateChangedEventArgs>? PlayStateChanged;
 
-    private AudioPlayer(string filePath, int audioDeviceId = -1)
+    private AudioPlayer(string filePath, int audioDeviceID = -1)
     {
         audioFile = new AudioFileReader(filePath);
         
-        if (audioDeviceId >= 0 && audioDeviceId < WaveOut.DeviceCount)
+        if (audioDeviceID >= 0 && audioDeviceID < WaveOut.DeviceCount)
         {
             try
             {
-                waveOut = new WaveOutEvent { DeviceNumber = audioDeviceId };
+                waveOut = new WaveOutEvent { DeviceNumber = audioDeviceID };
             }
             catch
             {
@@ -63,7 +63,7 @@ public class AudioPlayer : IAsyncDisposable
         playbackStarted.TrySetResult(false);
     }
 
-    public static async Task PlayAudioAsync(string filePath, int volume = 100, int audioDeviceId = -1, CancellationToken cancellationToken = default)
+    public static async Task PlayAudioAsync(string filePath, int volume = 100, int audioDeviceID = -1, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("Path is null or empty", nameof(filePath));
@@ -71,7 +71,7 @@ public class AudioPlayer : IAsyncDisposable
         if (!File.Exists(filePath))
             throw new FileNotFoundException("Audio file not found", filePath);
 
-        await using var player = new AudioPlayer(filePath, audioDeviceId);
+        await using var player = new AudioPlayer(filePath, audioDeviceID);
         player.SetVolume(volume);
         await player.PlayInternalAsync(cancellationToken).ConfigureAwait(false);
     }

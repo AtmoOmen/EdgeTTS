@@ -180,7 +180,7 @@ public sealed partial class EdgeTTSEngine
     /// 获取系统默认音频输出设备的ID
     /// </summary>
     /// <returns>默认音频设备ID，如果无法获取则返回-1</returns>
-    public static int GetDefaultAudioDeviceId()
+    public static int GetDefaultAudioDeviceID()
     {
         try
         {
