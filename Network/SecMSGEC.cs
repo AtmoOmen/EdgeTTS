@@ -3,7 +3,7 @@ using System.Text;
 
 namespace EdgeTTS.Network;
 
-public static class SecMSGEC
+internal static class SecMSGEC
 {
     private static string? secMSGEC;
     private static long    lastTicks;

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Text.Json;
 using EdgeTTS.Common;
 using EdgeTTS.Models;
 using NAudio.CoreAudioApi;
@@ -12,7 +13,8 @@ public sealed partial class EdgeTTSEngine
     private Voice[]? voices;
     
     /// <summary>
-    /// 所有可用的语音列表
+    /// 所有可用的声音列表, 在首次读取时会自动调用 <see cref="ReloadVoicesData"/> 方法填充数据并缓存, 需要刷新数据请调用 <see cref="ReloadVoicesData"/>
+    /// <seealso cref="VoiceFolder"/>
     /// </summary>
     public Voice[] Voices
     {
@@ -21,8 +23,24 @@ public sealed partial class EdgeTTSEngine
             if (voices != null)
                 return voices;
 
-            return voices = LoadVoicesFromJSON();
-        } 
+            return voices = ReloadVoicesData();
+        }
+    }
+
+    private Dictionary<int, AudioDevice>? audioDevices;
+
+    /// <summary>
+    /// 所有可用的音频设备列表, 在首次读取时会自动调用 <see cref="ReloadAudioDevicesData"/> 方法填充数据并缓存, 需要刷新数据请调用 <see cref="ReloadAudioDevicesData"/>
+    /// </summary>
+    public Dictionary<int, AudioDevice> AudioDevices
+    {
+        get
+        {
+            if (audioDevices != null)
+                return audioDevices;
+            
+            return audioDevices = ReloadAudioDevicesData();
+        }
     }
     
     /// <summary>
@@ -193,6 +211,42 @@ public sealed partial class EdgeTTSEngine
     }
     
     /// <summary>
+    /// 获取系统所有可用的音频输出设备, 调用后 <see cref="AudioDevices"/> 的数据也会被刷新
+    /// </summary>
+    /// <returns>音频设备列表</returns>
+    public Dictionary<int, AudioDevice> ReloadAudioDevicesData()
+    {
+        var devices = new Dictionary<int, AudioDevice>();
+        
+        try
+        {
+            for (var i = 0; i < WaveOut.DeviceCount; i++)
+            {
+                var capabilities = WaveOut.GetCapabilities(i);
+                devices.TryAdd(i, new(i, capabilities.ProductName));
+            }
+            
+            if (devices.Count == 0)
+            {
+                using var enumerator    = new MMDeviceEnumerator();
+                var       outputDevices = enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+                
+                for (var i = 0; i < outputDevices.Count; i++)
+                {
+                    var device = outputDevices[i];
+                    devices.TryAdd(i, new(i, device.FriendlyName));
+                }
+            }
+        }
+        catch
+        {
+            devices.TryAdd(-1, new(-1, "默认音频设备"));
+        }
+        
+        return audioDevices = devices;
+    }
+    
+    /// <summary>
     /// 获取系统默认音频输出设备的ID
     /// </summary>
     /// <returns>默认音频设备ID，如果无法获取则返回-1</returns>
@@ -226,38 +280,30 @@ public sealed partial class EdgeTTSEngine
     }
     
     /// <summary>
-    /// 获取系统所有可用的音频输出设备
+    /// 重新从 voices.json 文件中读取声音数据, 调用后 <see cref="Voices"/> 的数据也会被刷新
+    /// <seealso cref="VoiceFolder"/>
     /// </summary>
-    /// <returns>音频设备列表</returns>
-    public static List<AudioDevice> GetAudioDevices()
+    /// <returns>声音列表</returns>
+    public Voice[] ReloadVoicesData()
     {
-        var devices = new List<AudioDevice>();
-        
         try
         {
-            for (var i = 0; i < WaveOut.DeviceCount; i++)
-            {
-                var capabilities = WaveOut.GetCapabilities(i);
-                devices.Add(new(i, capabilities.ProductName));
-            }
+            var jsonPath = Path.Combine(VoiceFolder, "voices.json");
+            if (!File.Exists(jsonPath))
+                throw new FileNotFoundException($"语音配置文件未找到: {jsonPath}");
+
+            var jsonContent = File.ReadAllText(jsonPath);
+            var voiceData   = JsonSerializer.Deserialize<VoiceData[]>(jsonContent);
             
-            if (devices.Count == 0)
-            {
-                using var enumerator = new MMDeviceEnumerator();
-                var outputDevices = enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
-                
-                for (var i = 0; i < outputDevices.Count; i++)
-                {
-                    var device = outputDevices[i];
-                    devices.Add(new(i, device.FriendlyName));
-                }
-            }
+            if (voiceData == null)
+                throw new InvalidOperationException("无法解析语音配置文件");
+
+            var result = voiceData.Select(v => new Voice(v.Value, v.DisplayName)).ToArray() ?? [];
+            return voices = result;
         }
-        catch
+        catch (Exception ex)
         {
-            devices.Add(new(-1, "默认音频设备"));
+            throw new InvalidOperationException($"加载语音配置失败: {ex.Message}", ex);
         }
-        
-        return devices;
     }
 }

@@ -1,9 +1,7 @@
 using System.Diagnostics;
-using System.Reflection;
 using System.Security;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using EdgeTTS.Common;
 using EdgeTTS.Models;
 using EdgeTTS.Network;
@@ -12,27 +10,7 @@ namespace EdgeTTS;
 
 public sealed partial class EdgeTTSEngine
 {
-    private Voice[] LoadVoicesFromJSON()
-    {
-        try
-        {
-            var jsonPath = Path.Combine(VoiceFolder, "voices.json");
-            if (!File.Exists(jsonPath))
-                throw new FileNotFoundException($"语音配置文件未找到: {jsonPath}");
-
-            var jsonContent = File.ReadAllText(jsonPath);
-            var voiceData   = JsonSerializer.Deserialize<VoiceData[]>(jsonContent);
-            
-            if (voiceData == null)
-                throw new InvalidOperationException("无法解析语音配置文件");
-
-            return voiceData.Select(v => new Voice(v.Value, v.DisplayName)).ToArray() ?? [];
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"加载语音配置失败: {ex.Message}", ex);
-        }
-    }
+    private readonly CancellationTokenSource cancelSource = new();
     
     private void Log(string message) => 
         LogHandler?.Invoke($"[EdgeTTS] {message}");
