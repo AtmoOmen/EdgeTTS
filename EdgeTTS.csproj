@@ -7,7 +7,9 @@
         <Nullable>enable</Nullable>
         <PublishSingleFile>true</PublishSingleFile>
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <Platforms>x64</Platforms>
+        <DebugType>none</DebugType>
+        <DebugSymbols>false</DebugSymbols>
+        <Optimize>True</Optimize>
     </PropertyGroup>
 
     <ItemGroup>
