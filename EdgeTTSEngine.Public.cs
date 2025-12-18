@@ -51,14 +51,20 @@ public sealed partial class EdgeTTSEngine
     public void Speak(string text, EdgeTTSSettings settings)
     {
         ThrowIfDisposed();
-        try
+        _ = Task.Run(async () =>
         {
-            Task.Run(async () => await SpeakAsync(text, settings).ConfigureAwait(false), cancelSource.Token).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            // ignored
-        }
+            try
+            {
+                await SpeakAsync(text, settings).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                Log($"语音合成任务异常: {ex.Message}");
+            }
+        }, cancelSource.Token).ConfigureAwait(false);
     }
 
     /// <summary>
