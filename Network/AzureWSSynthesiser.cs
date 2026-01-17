@@ -445,9 +445,10 @@ internal static class AzureWSSynthesiser
 
     private static string BuildExpressAs(string text, string? style, int styleDegree, string? role)
     {
-        if ((style.Equals("general", StringComparison.OrdinalIgnoreCase) && role.Equals("default", StringComparison.OrdinalIgnoreCase)) ||
-            string.IsNullOrWhiteSpace(style) &&
-            string.IsNullOrWhiteSpace(role))
+        if (string.IsNullOrWhiteSpace(style)                            ||
+            string.IsNullOrWhiteSpace(role)                             ||
+            style.Equals("general", StringComparison.OrdinalIgnoreCase) ||
+            role.Equals("default", StringComparison.OrdinalIgnoreCase))
             return text;
 
         var sb = new StringBuilder("<mstts:express-as");
