@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 using EdgeTTS.Common;
 using EdgeTTS.Models;
@@ -10,13 +11,14 @@ namespace EdgeTTS;
 
 public sealed partial class EdgeTTSEngine
 {
-    private Voice[]? voices;
+    private Dictionary<string, Dictionary<string, VoiceInfo[]>>? voices;
     
     /// <summary>
     /// 所有可用的声音列表, 在首次读取时会自动调用 <see cref="ReloadVoicesData"/> 方法填充数据并缓存, 需要刷新数据请调用 <see cref="ReloadVoicesData"/>
+    /// 地区名 (Locale) - 性别 (Male / Female) - 声音
     /// <seealso cref="VoiceFolder"/>
     /// </summary>
-    public Voice[] Voices
+    public Dictionary<string, Dictionary<string, VoiceInfo[]>> Voices
     {
         get
         {
@@ -290,7 +292,7 @@ public sealed partial class EdgeTTSEngine
     /// <seealso cref="VoiceFolder"/>
     /// </summary>
     /// <returns>声音列表</returns>
-    public Voice[] ReloadVoicesData()
+    public Dictionary<string, Dictionary<string, VoiceInfo[]>> ReloadVoicesData()
     {
         try
         {
@@ -299,13 +301,29 @@ public sealed partial class EdgeTTSEngine
                 throw new FileNotFoundException($"语音配置文件未找到: {jsonPath}");
 
             var jsonContent = File.ReadAllText(jsonPath);
-            var voiceData   = JsonSerializer.Deserialize<VoiceData[]>(jsonContent);
+            var voiceData   = JsonSerializer.Deserialize<VoiceInfo[]>(jsonContent);
             
             if (voiceData == null)
                 throw new InvalidOperationException("无法解析语音配置文件");
 
-            var result = voiceData.Select(v => new Voice(v.Value, v.DisplayName)).ToArray() ?? [];
-            return voices = result;
+            return voices = voiceData.OrderByDescending(x =>
+                                         {
+                                             if (x.LocaleInfo.Name == CultureInfo.CurrentUICulture.Name)
+                                                 return 2;
+
+                                             if (x.LocaleInfo.Parent.TwoLetterISOLanguageName == CultureInfo.CurrentUICulture.Parent.TwoLetterISOLanguageName)
+                                                 return 1;
+                                             
+                                             return 0;
+                                         }
+                                     )
+                                     .GroupBy(x => x.LocaleInfo.DisplayName)
+                                     .ToDictionary
+                                     (
+                                         x => x.Key,
+                                         x => x.GroupBy(d => d.GenderName)
+                                               .ToDictionary(d => d.Key, d => d.ToArray())
+                                     );
         }
         catch (Exception ex)
         {

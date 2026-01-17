@@ -5,6 +5,7 @@ using System.Text;
 using EdgeTTS.Common;
 using EdgeTTS.Models;
 using EdgeTTS.Network;
+using Newtonsoft.Json;
 
 namespace EdgeTTS;
 
@@ -87,10 +88,4 @@ public sealed partial class EdgeTTSEngine
 
     private void ThrowIfDisposed() =>
         ObjectDisposedException.ThrowIf(IsDisposed, typeof(EdgeTTSEngine));
-    
-    private class VoiceData
-    {
-        public string Value       { get; set; } = string.Empty;
-        public string DisplayName { get; set; } = string.Empty;
-    }
 }

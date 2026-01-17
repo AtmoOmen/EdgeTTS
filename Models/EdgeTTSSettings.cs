@@ -10,10 +10,12 @@ public class EdgeTTSSettings
 
     public Dictionary<string, string> PhonemeReplacements { get; set; } = new()
     {
-        ["欧米茄"] = "欧米加",
-        ["歐米茄"] = "歐米加",
+        ["欧米茄"]  = "欧米加",
+        ["歐米茄"]  = "歐米加",
+        ["要塞"]   = "要赛",
+        ["拾级迷宫"] = "十级迷宫"
     };
 
     public override string ToString() => 
-        $"{nameof(Speed)}: {Speed}, {nameof(Pitch)}: {Pitch}, {nameof(Volume)}: {Volume}, {nameof(Voice)}: {Voice}";
+        $"{nameof(Speed)}: {Speed}, {nameof(Pitch)}: {Pitch}, {nameof(Voice)}: {Voice}";
 }
