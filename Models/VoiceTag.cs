@@ -1,10 +1,10 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace EdgeTTS.Models;
 
 public class VoiceTag
 {
-    [JsonProperty("ContentCategories")] public List<string> ContentCategories { get; set; }
+    [JsonPropertyName("ContentCategories")] public List<string> ContentCategories { get; set; }
 
-    [JsonProperty("VoicePersonalities")] public List<string> VoicePersonalities { get; set; }
+    [JsonPropertyName("VoicePersonalities")] public List<string> VoicePersonalities { get; set; }
 }

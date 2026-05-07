@@ -1,5 +1,5 @@
 using System.Globalization;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace EdgeTTS.Models;
 
@@ -12,14 +12,14 @@ public class VoiceInfo
         ["ko"] = new() { ["Male"] = "남성", ["Female"] = "여성" }
     };
 
-    [JsonProperty("Name")]           public string   Name           { get; set; }
-    [JsonProperty("ShortName")]      public string   ShortName      { get; set; }
-    [JsonProperty("Gender")]         public string   Gender         { get; set; }
-    [JsonProperty("Locale")]         public string   Locale         { get; set; }
-    [JsonProperty("SuggestedCodec")] public string   SuggestedCodec { get; set; }
-    [JsonProperty("FriendlyName")]   public string   FriendlyName   { get; set; }
-    [JsonProperty("Status")]         public string   Status         { get; set; }
-    [JsonProperty("VoiceTag")]       public VoiceTag VoiceTag       { get; set; }
+    [JsonPropertyName("Name")]           public string   Name           { get; set; }
+    [JsonPropertyName("ShortName")]      public string   ShortName      { get; set; }
+    [JsonPropertyName("Gender")]         public string   Gender         { get; set; }
+    [JsonPropertyName("Locale")]         public string   Locale         { get; set; }
+    [JsonPropertyName("SuggestedCodec")] public string   SuggestedCodec { get; set; }
+    [JsonPropertyName("FriendlyName")]   public string   FriendlyName   { get; set; }
+    [JsonPropertyName("Status")]         public string   Status         { get; set; }
+    [JsonPropertyName("VoiceTag")]       public VoiceTag VoiceTag       { get; set; }
 
     [JsonIgnore] public CultureInfo LocaleInfo
     {

@@ -24,10 +24,5 @@
         </None>
     </ItemGroup>
 
-    <ItemGroup>
-        <Reference Include="Newtonsoft.Json">
-            <HintPath>C:\Users\AtmoOmen\AppData\Roaming\XIVLauncherCN\addon\Hooks\dev\Newtonsoft.Json.dll</HintPath>
-        </Reference>
-    </ItemGroup>
 
 </Project>
