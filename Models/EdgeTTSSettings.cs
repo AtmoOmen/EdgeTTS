@@ -97,6 +97,27 @@ public class EdgeTTSSettings
         ["拾级迷宫"] = "十级迷宫"
     };
 
+    /// <summary>
+    ///     切换到指定音色, 自动清除不兼容的 Style、Role、ContentCategories、VoicePersonalities
+    /// </summary>
+    public void SelectVoice
+    (
+        VoiceInfo voice
+    )
+    {
+        Voice = voice.ShortName;
+        var tag = voice.VoiceTag ?? new();
+
+        ContentCategories.RemoveAll(v => !tag.ContentCategories.Contains(v, StringComparer.OrdinalIgnoreCase));
+        VoicePersonalities.RemoveAll(v => !tag.VoicePersonalities.Contains(v, StringComparer.OrdinalIgnoreCase));
+
+        if (tag.Styles.Count == 0 || !tag.Styles.Contains(Style ?? string.Empty, StringComparer.OrdinalIgnoreCase))
+            Style = null;
+
+        if (tag.Roles.Count == 0 || !tag.Roles.Contains(Role ?? string.Empty, StringComparer.OrdinalIgnoreCase))
+            Role = null;
+    }
+
     public override string ToString() =>
         $"{nameof(Speed)}: {Speed}, {nameof(Pitch)}: {Pitch}, {nameof(Voice)}: {Voice}, "           +
         $"{nameof(Style)}: {Style}, {nameof(StyleDegree)}: {StyleDegree}, {nameof(Role)}: {Role}, " +
