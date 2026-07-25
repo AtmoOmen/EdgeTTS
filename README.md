@@ -32,27 +32,6 @@ var settings = new EdgeTTSSettings("zh-CN-XiaoxiaoNeural", speed: 110)
 await engine.SpeakAsync("你好", settings, cancellationToken);
 ```
 
-也可以把声音标签作为合成参数传入, `ContentCategories` 和 `VoicePersonalities` 会写入合成请求
-
-```csharp
-var taggedSettings = new EdgeTTSSettings
-{
-    ContentCategories  = ["Novel"],
-    VoicePersonalities = ["Cheerful", "Warm"]
-};
-
-await engine.SpeakAsync("你好", taggedSettings);
-var voices = engine.FindVoices
-(
-    new VoiceTag
-    {
-        ContentCategories  = taggedSettings.ContentCategories,
-        VoicePersonalities = taggedSettings.VoicePersonalities
-    },
-    locale: "zh-CN"
-);
-```
-
 缓存目录、声音文件目录和日志均为可选配置，声音文件缺失时自动读取程序集内置数据
 
 ```csharp

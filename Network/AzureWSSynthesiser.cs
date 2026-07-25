@@ -20,9 +20,7 @@ internal static class AzureWSSynthesiser
         string            voice,
         string?           style       = null,
         int               styleDegree = 100,
-        string?           role        = null,
-        IReadOnlyList<string>? contentCategories  = null,
-        IReadOnlyList<string>? voicePersonalities = null
+        string?           role        = null
     )
     {
         ArgumentNullException.ThrowIfNull(ws);
@@ -43,8 +41,6 @@ internal static class AzureWSSynthesiser
                    style,
                    styleDegree,
                    role,
-                   contentCategories,
-                   voicePersonalities,
                    timeoutCts.Token
                ).ConfigureAwait(false);
     }
@@ -60,8 +56,6 @@ internal static class AzureWSSynthesiser
         string?           style,
         int               styleDegree,
         string?           role,
-        IReadOnlyList<string>? contentCategories,
-        IReadOnlyList<string>? voicePersonalities,
         CancellationToken cancellationToken
     )
     {
@@ -99,8 +93,6 @@ internal static class AzureWSSynthesiser
                             style,
                             styleDegree,
                             role,
-                            contentCategories,
-                            voicePersonalities,
                             cancellationToken
                         ),
                     sendLock,
@@ -294,8 +286,6 @@ internal static class AzureWSSynthesiser
         string?           style,
         int               styleDegree,
         string?           role,
-        IReadOnlyList<string>? contentCategories,
-        IReadOnlyList<string>? voicePersonalities,
         CancellationToken cancellationToken
     )
     {
@@ -308,9 +298,7 @@ internal static class AzureWSSynthesiser
                        voice,
                        style,
                        styleDegree,
-                       role,
-                       contentCategories,
-                       voicePersonalities
+                       role
                    );
         var request = new StringBuilder()
                       .AppendLine(PathConstants.SSML)
@@ -406,15 +394,13 @@ internal static class AzureWSSynthesiser
         string  voice,
         string? style       = null,
         int     styleDegree = 100,
-        string? role        = null,
-        IReadOnlyList<string>? contentCategories  = null,
-        IReadOnlyList<string>? voicePersonalities = null
+        string? role        = null
     ) =>
         new StringBuilder()
             .Append("<speak xmlns=\"http://www.w3.org/2001/10/synthesis\" xmlns:mstts=\"http://www.w3.org/2001/mstts\" version=\"1.0\" xml:lang=\"en-US\">")
             .Append($"<voice name=\"{EscapeXmlAttribute(voice)}\">")
             .Append($"<prosody rate=\"{speed - 100}%\" pitch=\"{(pitch - 100) / 2}%\" volume=\"{Math.Clamp(volume, 1, 100)}\">")
-            .Append(BuildExpressAs(text, style, styleDegree, role, contentCategories, voicePersonalities))
+            .Append(BuildExpressAs(text, style, styleDegree, role))
             .Append("</prosody></voice></speak>")
             .ToString();
 
@@ -423,35 +409,26 @@ internal static class AzureWSSynthesiser
         string                   text,
         string?                  style,
         int                      styleDegree,
-        string?                  role,
-        IReadOnlyList<string>?   contentCategories,
-        IReadOnlyList<string>?   voicePersonalities
+        string?                  role
     )
     {
-        var hasContentCategories  = contentCategories is { Count: > 0 };
-        var hasVoicePersonalities = voicePersonalities is { Count: > 0 };
-        if ((!hasContentCategories && !hasVoicePersonalities &&
-             string.IsNullOrWhiteSpace(style) && string.IsNullOrWhiteSpace(role)) ||
-            string.Equals(style, "general", StringComparison.OrdinalIgnoreCase) && !hasContentCategories && !hasVoicePersonalities ||
-            string.Equals(role, "default", StringComparison.OrdinalIgnoreCase) && !hasContentCategories && !hasVoicePersonalities)
+        var hasStyle = !string.IsNullOrWhiteSpace(style) &&
+                       !string.Equals(style, "general", StringComparison.OrdinalIgnoreCase);
+        var hasRole  = !string.IsNullOrWhiteSpace(role) &&
+                       !string.Equals(role, "default", StringComparison.OrdinalIgnoreCase);
+        if (!hasStyle && !hasRole)
             return text;
 
         var sb = new StringBuilder("<mstts:express-as");
 
-        if (!string.IsNullOrWhiteSpace(style))
+        if (hasStyle)
         {
             sb.Append($" style=\"{EscapeXmlAttribute(style)}\"")
               .Append($" styledegree=\"{Math.Max(1, styleDegree) / 100.0f}\"");
         }
 
-        if (!string.IsNullOrWhiteSpace(role))
+        if (hasRole)
             sb.Append($" role=\"{EscapeXmlAttribute(role)}\"");
-
-        if (hasContentCategories)
-            sb.Append($" ContentCategories=\"{EscapeXmlAttribute(string.Join(",", contentCategories!))}\"");
-
-        if (hasVoicePersonalities)
-            sb.Append($" VoicePersonalities=\"{EscapeXmlAttribute(string.Join(",", voicePersonalities!))}\"");
 
         return sb.Append('>')
                  .Append(text)

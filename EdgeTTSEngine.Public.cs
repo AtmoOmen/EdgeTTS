@@ -31,17 +31,15 @@ public sealed partial class EdgeTTSEngine
     }
 
     /// <summary>
-    /// 按地区、性别和声音标签查询可用声音
+    /// 按地区、性别查询可用声音
     /// </summary>
-    /// <param name="voiceTag">可选声音标签筛选条件</param>
     /// <param name="locale">可选地区代码, 例如 zh-CN</param>
     /// <param name="gender">可选性别, 例如 Male 或 Female</param>
     /// <returns>匹配的声音列表</returns>
     public IReadOnlyList<VoiceInfo> FindVoices
     (
-        VoiceTag? voiceTag = null,
-        string?   locale   = null,
-        string?   gender   = null
+        string? locale = null,
+        string? gender = null
     )
     {
         var candidates = Voices.Values
@@ -51,9 +49,6 @@ public sealed partial class EdgeTTSEngine
                                                string.Equals(voice.Locale, locale, StringComparison.OrdinalIgnoreCase))
                                .Where(voice => string.IsNullOrWhiteSpace(gender) ||
                                                string.Equals(voice.Gender, gender, StringComparison.OrdinalIgnoreCase));
-
-        if (voiceTag != null)
-            candidates = candidates.Where(voice => MatchesVoiceTag(voice.VoiceTag, voiceTag));
 
         return candidates.ToArray();
     }
@@ -294,8 +289,6 @@ public sealed partial class EdgeTTSEngine
         if (settings.DeviceID < -1)
             throw new ArgumentOutOfRangeException(nameof(settings.DeviceID), "DeviceID must be -1 or greater");
 
-        ArgumentNullException.ThrowIfNull(settings.ContentCategories);
-        ArgumentNullException.ThrowIfNull(settings.VoicePersonalities);
         ArgumentNullException.ThrowIfNull(settings.PhonemeReplacements);
     }
 

@@ -34,9 +34,7 @@ public sealed partial class EdgeTTSEngine
                 Pitch             = settings.Pitch,
                 Style             = settings.Style,
                 StyleDegree       = settings.StyleDegree,
-                Role              = settings.Role,
-                ContentCategories = settings.ContentCategories,
-                VoicePersonalities  = settings.VoicePersonalities
+                Role              = settings.Role
             }
         );
         var hash      = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(cacheKey)));
@@ -115,9 +113,7 @@ public sealed partial class EdgeTTSEngine
                            settings.Voice,
                            settings.Style,
                            settings.StyleDegree,
-                           settings.Role,
-                           settings.ContentCategories,
-                           settings.VoicePersonalities
+                           settings.Role
                        )
                                                .ConfigureAwait(false);
             }
@@ -132,25 +128,6 @@ public sealed partial class EdgeTTSEngine
             }
 
         throw new IOException("语音合成失败, 已达到最大重试次数", lastException);
-    }
-
-    private static bool MatchesVoiceTag(VoiceTag? voiceTag, VoiceTag filter)
-    {
-        if (voiceTag == null)
-            return false;
-
-        var filterCategories     = filter.ContentCategories ?? [];
-        var filterPersonalities  = filter.VoicePersonalities ?? [];
-        var voiceCategories      = voiceTag.ContentCategories ?? [];
-        var voicePersonalities   = voiceTag.VoicePersonalities ?? [];
-        var categoryMatched      = filterCategories.Count == 0 ||
-                                   filterCategories.Any(category =>
-                                       voiceCategories.Any(value => string.Equals(value, category, StringComparison.OrdinalIgnoreCase)));
-        var personalityMatched   = filterPersonalities.Count == 0 ||
-                                   filterPersonalities.Any(personality =>
-                                       voicePersonalities.Any(value => string.Equals(value, personality, StringComparison.OrdinalIgnoreCase)));
-
-        return categoryMatched && personalityMatched;
     }
 
     private static bool IsTransientSynthesisError(Exception exception)

@@ -77,16 +77,6 @@ public class EdgeTTSSettings
     public string? Role { get; set; }
 
     /// <summary>
-    ///     内容分类合成参数, 会写入语音合成请求
-    /// </summary>
-    public List<string> ContentCategories { get; set; } = [];
-
-    /// <summary>
-    ///     声音性格合成参数, 会写入语音合成请求
-    /// </summary>
-    public List<string> VoicePersonalities { get; set; } = [];
-
-    /// <summary>
     ///     文本发音替换表
     /// </summary>
     public Dictionary<string, string> PhonemeReplacements { get; set; } = new()
@@ -98,7 +88,7 @@ public class EdgeTTSSettings
     };
 
     /// <summary>
-    ///     切换到指定音色, 自动清除不兼容的 Style、Role、ContentCategories、VoicePersonalities
+    ///     切换到指定音色, 自动清除不兼容的 Style 和 Role
     /// </summary>
     public void SelectVoice
     (
@@ -107,9 +97,6 @@ public class EdgeTTSSettings
     {
         Voice = voice.ShortName;
         var tag = voice.VoiceTag ?? new();
-
-        ContentCategories.RemoveAll(v => !tag.ContentCategories.Contains(v, StringComparer.OrdinalIgnoreCase));
-        VoicePersonalities.RemoveAll(v => !tag.VoicePersonalities.Contains(v, StringComparer.OrdinalIgnoreCase));
 
         if (tag.Styles.Count == 0 || !tag.Styles.Contains(Style ?? string.Empty, StringComparer.OrdinalIgnoreCase))
             Style = null;
@@ -120,7 +107,5 @@ public class EdgeTTSSettings
 
     public override string ToString() =>
         $"{nameof(Speed)}: {Speed}, {nameof(Pitch)}: {Pitch}, {nameof(Voice)}: {Voice}, "           +
-        $"{nameof(Style)}: {Style}, {nameof(StyleDegree)}: {StyleDegree}, {nameof(Role)}: {Role}, " +
-        $"{nameof(ContentCategories)}: {string.Join(",",  ContentCategories)}, "                    +
-        $"{nameof(VoicePersonalities)}: {string.Join(",", VoicePersonalities)}";
+        $"{nameof(Style)}: {Style}, {nameof(StyleDegree)}: {StyleDegree}, {nameof(Role)}: {Role}";
 }
