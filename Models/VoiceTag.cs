@@ -17,6 +17,10 @@ public class VoiceTag
     /// </summary>
     [JsonPropertyName("VoicePersonalities")] public List<string> VoicePersonalities { get; set; } = [];
 
+    [JsonPropertyName("Styles")] public List<string> Styles { get; set; } = [];
+
+    [JsonPropertyName("Roles")] public List<string> Roles { get; set; } = [];
+
     public override string ToString() =>
         $"{nameof(ContentCategories)}: {string.Join(",", ContentCategories ?? [])}, " +
         $"{nameof(VoicePersonalities)}: {string.Join(",", VoicePersonalities ?? [])}";

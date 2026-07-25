@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 using System.Security;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using EdgeTTS.Common;
 using EdgeTTS.Models;
 using EdgeTTS.Network;
@@ -19,30 +20,26 @@ public sealed partial class EdgeTTSEngine
     private void Log(string message) =>
         LogHandler?.Invoke($"[EdgeTTS] {message}");
 
-    private void CancelAndRenew()
-    {
-        var newSource = new CancellationTokenSource();
-        var oldSource = Interlocked.Exchange(ref cancelSource, newSource);
-
-        try
-        {
-            oldSource.Cancel();
-        }
-        catch
-        {
-            // ignored
-        }
-        finally
-        {
-            oldSource.Dispose();
-        }
-    }
-
     private async Task<string> GetOrCreateAudioFileAsync(string text, EdgeTTSSettings settings, CancellationToken cancellationToken)
     {
         text = SanitizeString(text, settings);
 
-        var hash      = ComputeHash($"EdgeTTS.{text}.{settings}")[..10];
+        var cacheKey = JsonSerializer.Serialize
+        (
+            new
+            {
+                Text              = text,
+                Voice             = settings.Voice,
+                Speed             = settings.Speed,
+                Pitch             = settings.Pitch,
+                Style             = settings.Style,
+                StyleDegree       = settings.StyleDegree,
+                Role              = settings.Role,
+                ContentCategories = settings.ContentCategories,
+                VoicePersonalities  = settings.VoicePersonalities
+            }
+        );
+        var hash      = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(cacheKey)));
         var cacheFile = Path.Combine(CacheFolder, $"{hash}.mp3");
         var cacheLock = cacheLocks.GetOrAdd(cacheFile, static _ => new SemaphoreSlim(1, 1));
 
@@ -166,9 +163,6 @@ public sealed partial class EdgeTTSEngine
 
         return false;
     }
-
-    private static string ComputeHash(string input) =>
-        SHA1.HashData(Encoding.UTF8.GetBytes(input)).ToBase36String();
 
     private void ThrowIfDisposed() =>
         ObjectDisposedException.ThrowIf(IsDisposed, typeof(EdgeTTSEngine));

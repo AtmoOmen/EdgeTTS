@@ -12,7 +12,7 @@ using var engine = new EdgeTTSEngine();
 await engine.SpeakAsync("你好");
 await engine.SpeakAsync("你好", "zh-CN-XiaoxiaoNeural", speed: 110, pitch: 105);
 
-var audio = await engine.SynthesizeAsync("你好", "zh-CN-XiaoxiaoNeural");
+var audio = await engine.SynthesizeAudioAsync("你好", "zh-CN-XiaoxiaoNeural");
 await File.WriteAllBytesAsync("speech.mp3", audio);
 ```
 

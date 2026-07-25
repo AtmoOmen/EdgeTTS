@@ -85,6 +85,12 @@ public sealed partial class EdgeTTSEngine
         _ = RunDetachedAsync(() => SpeakAsync(text, settings, token));
     }
 
+    public void Stop()
+    {
+        foreach (var player in activePlayers.Keys)
+            player.Stop();
+    }
+
     public void Speak(string text) =>
         Speak(text, new EdgeTTSSettings());
 
@@ -147,7 +153,7 @@ public sealed partial class EdgeTTSEngine
         }
     }
 
-    public async Task<byte[]> SynthesizeAsync
+    public async Task<byte[]> SynthesizeAudioAsync
     (
         string text,
         EdgeTTSSettings settings,
@@ -163,31 +169,31 @@ public sealed partial class EdgeTTSEngine
         return await SynthesizeWithRetryAsync(settings, sanitizedText, linkedCts.Token).ConfigureAwait(false);
     }
 
-    public Task<byte[]> SynthesizeAsync(string text, CancellationToken cancellationToken = default) =>
-        SynthesizeAsync(text, new EdgeTTSSettings(), cancellationToken);
+    public Task<byte[]> SynthesizeAudioAsync(string text, CancellationToken cancellationToken = default) =>
+        SynthesizeAudioAsync(text, new EdgeTTSSettings(), cancellationToken);
 
-    public Task<byte[]> SynthesizeAsync
+    public Task<byte[]> SynthesizeAudioAsync
     (
         string text,
         string voice,
         int    speed                = 100,
         int    pitch                = 100,
         CancellationToken cancellationToken = default
-    ) => SynthesizeAsync(text, CreateSettings(voice, speed, pitch), cancellationToken);
+    ) => SynthesizeAudioAsync(text, CreateSettings(voice, speed, pitch), cancellationToken);
 
     /// <summary>
     ///     同步缓存指定文本的音频文件
     /// </summary>
     /// <param name="text">要转换为语音的文本</param>
     /// <param name="settings">语音合成设置</param>
-    public void CacheAudioFile(string text, EdgeTTSSettings settings)
+    public void Synthesize(string text, EdgeTTSSettings settings)
     {
         ThrowIfDisposed();
         var token = cancelSource.Token;
-        _ = RunDetachedAsync(() => CacheAudioFileAsync(text, settings, token));
+        _ = RunDetachedAsync(() => SynthesizeAsync(text, settings, token));
     }
 
-    public Task CacheAudioFileAsync
+    public Task SynthesizeAsync
     (
         string text,
         EdgeTTSSettings settings,
@@ -252,7 +258,7 @@ public sealed partial class EdgeTTSEngine
     /// <param name="settings">语音合成设置</param>
     /// <param name="maxConcurrency">最大并行处理数量，默认为4</param>
     /// <param name="progressCallback">进度回调函数，参数为已完成数量和总数量</param>
-    public void CacheAudioFiles
+    public void Synthesize
     (
         IEnumerable<string> texts,
         EdgeTTSSettings     settings,
@@ -262,10 +268,10 @@ public sealed partial class EdgeTTSEngine
     {
         ThrowIfDisposed();
         var token = cancelSource.Token;
-        _ = RunDetachedAsync(() => CacheAudioFilesAsync(texts, settings, maxConcurrency, progressCallback, token));
+        _ = RunDetachedAsync(() => SynthesizeAsync(texts, settings, maxConcurrency, progressCallback, token));
     }
 
-    public Task<Dictionary<string, string>> CacheAudioFilesAsync
+    public Task<Dictionary<string, string>> SynthesizeAsync
     (
         IEnumerable<string> texts,
         EdgeTTSSettings     settings,
@@ -385,18 +391,6 @@ public sealed partial class EdgeTTSEngine
         }
 
         return new Dictionary<string, string>(result);
-    }
-
-    /// <summary>
-    ///     停止当前正在进行的语音合成或播放操作
-    /// </summary>
-    public void Stop()
-    {
-        if (IsDisposed) return;
-
-        foreach (var player in activePlayers.Keys)
-            player.Stop();
-        CancelAndRenew();
     }
 
     /// <summary>
