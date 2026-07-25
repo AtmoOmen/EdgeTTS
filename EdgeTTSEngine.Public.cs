@@ -85,12 +85,6 @@ public sealed partial class EdgeTTSEngine
         _ = RunDetachedAsync(() => SpeakAsync(text, settings, token));
     }
 
-    public void Stop()
-    {
-        foreach (var player in activePlayers.Keys)
-            player.Stop();
-    }
-
     public void Speak(string text) =>
         Speak(text, new EdgeTTSSettings());
 
