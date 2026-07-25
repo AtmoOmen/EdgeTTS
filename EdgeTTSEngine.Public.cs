@@ -488,7 +488,7 @@ public sealed partial class EdgeTTSEngine
                                      .ToDictionary
                                      (
                                          x => x.Key,
-                                         x => x.GroupBy(d => d.GenderName)
+                                         x => x.GroupBy(d => d.Gender)
                                                .ToDictionary(d => d.Key, d => d.ToArray())
                                      );
         }
