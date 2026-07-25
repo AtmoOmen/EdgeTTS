@@ -124,7 +124,7 @@ public sealed class AudioPlayer : IDisposable, IAsyncDisposable
 
     private void SetVolume(int volume)
     {
-        var normalizedVolume = Math.Clamp(volume, 0, 100) / 50f;
+        var normalizedVolume = Math.Clamp(volume, 0, 100) / 100f;
         audioFile.Volume = normalizedVolume;
     }
 
@@ -143,9 +143,9 @@ public sealed class AudioPlayer : IDisposable, IAsyncDisposable
             while (IsPlaying && !cancellationToken.IsCancellationRequested)
                 await Task.Delay(100, cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            // 正常取消，不需要处理
+            throw;
         }
         finally
         {

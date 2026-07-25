@@ -1,4 +1,5 @@
 using System.Net.WebSockets;
+using System.Security;
 using System.Text;
 
 namespace EdgeTTS.Network;
@@ -7,8 +8,6 @@ internal static class AzureWSSynthesiser
 {
     private const int WEBSOCKET_TIMEOUT_MS = 15000;
     private const int BUFFER_SIZE          = 4096;
-    private const int MAX_RETRIES          = 9;
-    private const int RETRY_DELAY_MS       = 1000;
 
     public static async Task<byte[]> SynthesisAsync
     (
@@ -21,65 +20,34 @@ internal static class AzureWSSynthesiser
         string            voice,
         string?           style       = null,
         int               styleDegree = 100,
-        string?           role        = null
+        string?           role        = null,
+        IReadOnlyList<string>? contentCategories  = null,
+        IReadOnlyList<string>? voicePersonalities = null
     )
     {
         ArgumentNullException.ThrowIfNull(ws);
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(voice);
 
-        var        retryCount    = 0;
-        Exception? lastException = null;
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(WEBSOCKET_TIMEOUT_MS);
 
-        while (retryCount < MAX_RETRIES)
-        {
-            try
-            {
-                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                timeoutCts.CancelAfter(WEBSOCKET_TIMEOUT_MS);
-
-                return await ExecuteSynthesisAsync
-                       (
-                           ws,
-                           text,
-                           speed,
-                           pitch,
-                           volume,
-                           voice,
-                           style,
-                           styleDegree,
-                           role,
-                           timeoutCts.Token
-                       ).ConfigureAwait(false);
-            }
-            catch (Exception ex) when (ShouldRetry(ex) && retryCount < MAX_RETRIES - 1)
-            {
-                lastException = ex;
-                retryCount++;
-
-                await Task.Delay(RETRY_DELAY_MS * retryCount, cancellationToken).ConfigureAwait(false);
-
-                if (ws.State != WebSocketState.Open)
-                {
-                    throw new InvalidOperationException
-                    (
-                        "WebSocket connection lost and needs to be re-established",
-                        ex
-                    );
-                }
-            }
-        }
-
-        throw new IOException($"Synthesis failed after {MAX_RETRIES} attempts", lastException);
+        return await ExecuteSynthesisAsync
+               (
+                   ws,
+                   text,
+                   speed,
+                   pitch,
+                   volume,
+                   voice,
+                   style,
+                   styleDegree,
+                   role,
+                   contentCategories,
+                   voicePersonalities,
+                   timeoutCts.Token
+               ).ConfigureAwait(false);
     }
-
-    private static bool ShouldRetry(Exception ex) =>
-        ex switch
-        {
-            IOException             => true,
-            WebSocketException wsEx => wsEx.WebSocketErrorCode != WebSocketError.InvalidState,
-            _                       => false
-        };
 
     private static async Task<byte[]> ExecuteSynthesisAsync
     (
@@ -92,6 +60,8 @@ internal static class AzureWSSynthesiser
         string?           style,
         int               styleDegree,
         string?           role,
+        IReadOnlyList<string>? contentCategories,
+        IReadOnlyList<string>? voicePersonalities,
         CancellationToken cancellationToken
     )
     {
@@ -129,6 +99,8 @@ internal static class AzureWSSynthesiser
                             style,
                             styleDegree,
                             role,
+                            contentCategories,
+                            voicePersonalities,
                             cancellationToken
                         ),
                     sendLock,
@@ -156,9 +128,11 @@ internal static class AzureWSSynthesiser
 
         while (attempts < 2) // 最多重试一次
         {
+            var acquired = false;
             try
             {
                 await sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+                acquired = true;
                 await sendAction().ConfigureAwait(false);
                 return;
             }
@@ -169,7 +143,8 @@ internal static class AzureWSSynthesiser
             }
             finally
             {
-                sendLock.Release();
+                if (acquired)
+                    sendLock.Release();
             }
         }
     }
@@ -319,10 +294,24 @@ internal static class AzureWSSynthesiser
         string?           style,
         int               styleDegree,
         string?           role,
+        IReadOnlyList<string>? contentCategories,
+        IReadOnlyList<string>? voicePersonalities,
         CancellationToken cancellationToken
     )
     {
-        var ssml = CreateSSML(text, speed, pitch, volume, voice, style, styleDegree, role);
+        var ssml = CreateSSML
+                   (
+                       text,
+                       speed,
+                       pitch,
+                       volume,
+                       voice,
+                       style,
+                       styleDegree,
+                       role,
+                       contentCategories,
+                       voicePersonalities
+                   );
         var request = new StringBuilder()
                       .AppendLine(PathConstants.SSML)
                       .AppendLine($"X-RequestID:{requestID}")
@@ -417,40 +406,61 @@ internal static class AzureWSSynthesiser
         string  voice,
         string? style       = null,
         int     styleDegree = 100,
-        string? role        = null
+        string? role        = null,
+        IReadOnlyList<string>? contentCategories  = null,
+        IReadOnlyList<string>? voicePersonalities = null
     ) =>
         new StringBuilder()
             .Append("<speak xmlns=\"http://www.w3.org/2001/10/synthesis\" xmlns:mstts=\"http://www.w3.org/2001/mstts\" version=\"1.0\" xml:lang=\"en-US\">")
-            .Append($"<voice name=\"{voice}\">")
+            .Append($"<voice name=\"{EscapeXmlAttribute(voice)}\">")
             .Append($"<prosody rate=\"{speed - 100}%\" pitch=\"{(pitch - 100) / 2}%\" volume=\"{Math.Clamp(volume, 1, 100)}\">")
-            .Append(BuildExpressAs(text, style, styleDegree, role))
+            .Append(BuildExpressAs(text, style, styleDegree, role, contentCategories, voicePersonalities))
             .Append("</prosody></voice></speak>")
             .ToString();
 
-    private static string BuildExpressAs(string text, string? style, int styleDegree, string? role)
+    private static string BuildExpressAs
+    (
+        string                   text,
+        string?                  style,
+        int                      styleDegree,
+        string?                  role,
+        IReadOnlyList<string>?   contentCategories,
+        IReadOnlyList<string>?   voicePersonalities
+    )
     {
-        if (string.IsNullOrWhiteSpace(style)                            ||
-            string.IsNullOrWhiteSpace(role)                             ||
-            style.Equals("general", StringComparison.OrdinalIgnoreCase) ||
-            role.Equals("default", StringComparison.OrdinalIgnoreCase))
+        var hasContentCategories  = contentCategories is { Count: > 0 };
+        var hasVoicePersonalities = voicePersonalities is { Count: > 0 };
+        if ((!hasContentCategories && !hasVoicePersonalities &&
+             string.IsNullOrWhiteSpace(style) && string.IsNullOrWhiteSpace(role)) ||
+            string.Equals(style, "general", StringComparison.OrdinalIgnoreCase) && !hasContentCategories && !hasVoicePersonalities ||
+            string.Equals(role, "default", StringComparison.OrdinalIgnoreCase) && !hasContentCategories && !hasVoicePersonalities)
             return text;
 
         var sb = new StringBuilder("<mstts:express-as");
 
         if (!string.IsNullOrWhiteSpace(style))
         {
-            sb.Append($" style=\"{style}\"")
+            sb.Append($" style=\"{EscapeXmlAttribute(style)}\"")
               .Append($" styledegree=\"{Math.Max(1, styleDegree) / 100.0f}\"");
         }
 
         if (!string.IsNullOrWhiteSpace(role))
-            sb.Append($" role=\"{role}\"");
+            sb.Append($" role=\"{EscapeXmlAttribute(role)}\"");
+
+        if (hasContentCategories)
+            sb.Append($" ContentCategories=\"{EscapeXmlAttribute(string.Join(",", contentCategories!))}\"");
+
+        if (hasVoicePersonalities)
+            sb.Append($" VoicePersonalities=\"{EscapeXmlAttribute(string.Join(",", voicePersonalities!))}\"");
 
         return sb.Append('>')
                  .Append(text)
                  .Append("</mstts:express-as>")
                  .ToString();
     }
+
+    private static string EscapeXmlAttribute(string value) =>
+        SecurityElement.Escape(value) ?? string.Empty;
 
     private static class PathConstants
     {

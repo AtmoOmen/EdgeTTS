@@ -2,9 +2,22 @@ using System.Text.Json.Serialization;
 
 namespace EdgeTTS.Models;
 
+/// <summary>
+/// 声音目录中的分类和性格标签
+/// </summary>
 public class VoiceTag
 {
-    [JsonPropertyName("ContentCategories")] public List<string> ContentCategories { get; set; }
+    /// <summary>
+    /// 内容分类
+    /// </summary>
+    [JsonPropertyName("ContentCategories")] public List<string> ContentCategories { get; set; } = [];
 
-    [JsonPropertyName("VoicePersonalities")] public List<string> VoicePersonalities { get; set; }
+    /// <summary>
+    /// 声音性格
+    /// </summary>
+    [JsonPropertyName("VoicePersonalities")] public List<string> VoicePersonalities { get; set; } = [];
+
+    public override string ToString() =>
+        $"{nameof(ContentCategories)}: {string.Join(",", ContentCategories ?? [])}, " +
+        $"{nameof(VoicePersonalities)}: {string.Join(",", VoicePersonalities ?? [])}";
 }
