@@ -62,21 +62,6 @@ public class EdgeTTSSettings
     public string Voice { get; set; } = "zh-CN-YunyangNeural";
 
     /// <summary>
-    ///     SSML 表达风格, 为空时不启用风格包装
-    /// </summary>
-    public string? Style { get; set; }
-
-    /// <summary>
-    ///     SSML 风格强度, 有效范围为 1 到 200
-    /// </summary>
-    public int StyleDegree { get; set; } = 100;
-
-    /// <summary>
-    ///     SSML 角色, 为空时不设置角色
-    /// </summary>
-    public string? Role { get; set; }
-
-    /// <summary>
     ///     文本发音替换表
     /// </summary>
     public Dictionary<string, string> PhonemeReplacements { get; set; } = new()
@@ -87,25 +72,6 @@ public class EdgeTTSSettings
         ["拾级迷宫"] = "十级迷宫"
     };
 
-    /// <summary>
-    ///     切换到指定音色, 自动清除不兼容的 Style 和 Role
-    /// </summary>
-    public void SelectVoice
-    (
-        VoiceInfo voice
-    )
-    {
-        Voice = voice.ShortName;
-        var tag = voice.VoiceTag ?? new();
-
-        if (tag.Styles.Count == 0 || !tag.Styles.Contains(Style ?? string.Empty, StringComparer.OrdinalIgnoreCase))
-            Style = null;
-
-        if (tag.Roles.Count == 0 || !tag.Roles.Contains(Role ?? string.Empty, StringComparer.OrdinalIgnoreCase))
-            Role = null;
-    }
-
     public override string ToString() =>
-        $"{nameof(Speed)}: {Speed}, {nameof(Pitch)}: {Pitch}, {nameof(Voice)}: {Voice}, "           +
-        $"{nameof(Style)}: {Style}, {nameof(StyleDegree)}: {StyleDegree}, {nameof(Role)}: {Role}";
+        $"{nameof(Speed)}: {Speed}, {nameof(Pitch)}: {Pitch}, {nameof(Voice)}: {Voice}";
 }

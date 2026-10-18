@@ -12,15 +12,12 @@ internal static class AzureWSSynthesiser
     public static async Task<byte[]> SynthesisAsync
     (
         WebSocket         ws,
-        CancellationToken cancellationToken,
         string            text,
         int               speed,
         int               pitch,
         int               volume,
         string            voice,
-        string?           style       = null,
-        int               styleDegree = 100,
-        string?           role        = null
+        CancellationToken cancellationToken
     )
     {
         ArgumentNullException.ThrowIfNull(ws);
@@ -38,9 +35,6 @@ internal static class AzureWSSynthesiser
                    pitch,
                    volume,
                    voice,
-                   style,
-                   styleDegree,
-                   role,
                    timeoutCts.Token
                ).ConfigureAwait(false);
     }
@@ -53,9 +47,6 @@ internal static class AzureWSSynthesiser
         int               pitch,
         int               volume,
         string            voice,
-        string?           style,
-        int               styleDegree,
-        string?           role,
         CancellationToken cancellationToken
     )
     {
@@ -90,9 +81,6 @@ internal static class AzureWSSynthesiser
                             pitch,
                             volume,
                             voice,
-                            style,
-                            styleDegree,
-                            role,
                             cancellationToken
                         ),
                     sendLock,
@@ -121,6 +109,7 @@ internal static class AzureWSSynthesiser
         while (attempts < 2) // 最多重试一次
         {
             var acquired = false;
+
             try
             {
                 await sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -192,7 +181,7 @@ internal static class AzureWSSynthesiser
 
                         if (result.EndOfMessage)
                         {
-                            await HandleBinaryMessageAsync(messageBuffer.ToArray(), requestID, buffer).ConfigureAwait(false);
+                            await HandleBinaryMessageAsync([.. messageBuffer], requestID, buffer).ConfigureAwait(false);
                             state = ProtocolState.Streaming;
                             messageBuffer.Clear();
                         }
@@ -283,23 +272,17 @@ internal static class AzureWSSynthesiser
         int               pitch,
         int               volume,
         string            voice,
-        string?           style,
-        int               styleDegree,
-        string?           role,
         CancellationToken cancellationToken
     )
     {
         var ssml = CreateSSML
-                   (
-                       text,
-                       speed,
-                       pitch,
-                       volume,
-                       voice,
-                       style,
-                       styleDegree,
-                       role
-                   );
+        (
+            text,
+            speed,
+            pitch,
+            volume,
+            voice
+        );
         var request = new StringBuilder()
                       .AppendLine(PathConstants.SSML)
                       .AppendLine($"X-RequestID:{requestID}")
@@ -357,7 +340,10 @@ internal static class AzureWSSynthesiser
         await buffer.WriteAsync(data.AsMemory(2 + headerLen)).ConfigureAwait(false);
     }
 
-    private static async Task SafeCloseWebSocketAsync(WebSocket ws)
+    private static async Task SafeCloseWebSocketAsync
+    (
+        WebSocket ws
+    )
     {
         try
         {
@@ -387,57 +373,25 @@ internal static class AzureWSSynthesiser
 
     private static string CreateSSML
     (
-        string  text,
-        int     speed,
-        int     pitch,
-        int     volume,
-        string  voice,
-        string? style       = null,
-        int     styleDegree = 100,
-        string? role        = null
+        string text,
+        int    speed,
+        int    pitch,
+        int    volume,
+        string voice
     ) =>
         new StringBuilder()
             .Append("<speak xmlns=\"http://www.w3.org/2001/10/synthesis\" xmlns:mstts=\"http://www.w3.org/2001/mstts\" version=\"1.0\" xml:lang=\"en-US\">")
             .Append($"<voice name=\"{EscapeXmlAttribute(voice)}\">")
             .Append($"<prosody rate=\"{speed - 100}%\" pitch=\"{(pitch - 100) / 2}%\" volume=\"{Math.Clamp(volume, 1, 100)}\">")
-            .Append(BuildExpressAs(text, style, styleDegree, role))
+            .Append(text)
             .Append("</prosody></voice></speak>")
             .ToString();
 
-    private static string BuildExpressAs
+    private static string EscapeXmlAttribute
     (
-        string                   text,
-        string?                  style,
-        int                      styleDegree,
-        string?                  role
-    )
-    {
-        var hasStyle = !string.IsNullOrWhiteSpace(style) &&
-                       !string.Equals(style, "general", StringComparison.OrdinalIgnoreCase);
-        var hasRole  = !string.IsNullOrWhiteSpace(role) &&
-                       !string.Equals(role, "default", StringComparison.OrdinalIgnoreCase);
-        if (!hasStyle && !hasRole)
-            return text;
-
-        var sb = new StringBuilder("<mstts:express-as");
-
-        if (hasStyle)
-        {
-            sb.Append($" style=\"{EscapeXmlAttribute(style)}\"")
-              .Append($" styledegree=\"{Math.Max(1, styleDegree) / 100.0f}\"");
-        }
-
-        if (hasRole)
-            sb.Append($" role=\"{EscapeXmlAttribute(role)}\"");
-
-        return sb.Append('>')
-                 .Append(text)
-                 .Append("</mstts:express-as>")
-                 .ToString();
-    }
-
-    private static string EscapeXmlAttribute(string value) =>
-        SecurityElement.Escape(value) ?? string.Empty;
+        string value
+    ) =>
+        SecurityElement.Escape(value);
 
     private static class PathConstants
     {
