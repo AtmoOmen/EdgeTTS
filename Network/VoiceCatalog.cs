@@ -7,8 +7,7 @@ namespace EdgeTTS.Network;
 
 internal static class VoiceCatalog
 {
-    private const string VOICE_URL =
-        $"https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken={SecMSGEC.TRUSTED_CLIENT_TOKEN}";
+    private const string VOICE_URL = "https://api.msedgeservices.com/tts/cognitiveservices/voices/list";
 
     private static readonly HttpClient Client = CreateClient();
 
@@ -30,7 +29,8 @@ internal static class VoiceCatalog
         using var request = new HttpRequestMessage
         (
             HttpMethod.Get,
-            $"{VOICE_URL}&Sec-MS-GEC={SecMSGEC.Get()}&Sec-MS-GEC-Version={EdgeTTSWebSocket.SEC_MS_GEC_VERSION}"
+            $"{VOICE_URL}?Ocp-Apim-Subscription-Key={SecMSGEC.TRUSTED_CLIENT_TOKEN}" +
+            $"&Sec-MS-GEC={SecMSGEC.Get()}&Sec-MS-GEC-Version={EdgeTTSWebSocket.SEC_MS_GEC_VERSION}"
         );
         ConfigureHeaders(request);
 

@@ -17,6 +17,12 @@ public class VoiceInfo
     [JsonPropertyName("Locale")]
     public string Locale { get; set; }
 
+    [JsonPropertyName("LocaleName")]
+    public string? LocaleName { get; set; }
+
+    [JsonPropertyName("LocalName")]
+    public string? LocalName { get; set; }
+
     [JsonPropertyName("SuggestedCodec")]
     public string SuggestedCodec { get; set; }
 
