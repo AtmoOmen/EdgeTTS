@@ -9,7 +9,8 @@ internal static class VoiceCatalog
 {
     private const string VOICE_URL = "https://api.msedgeservices.com/tts/cognitiveservices/voices/list";
 
-    private static readonly HttpClient Client = CreateClient();
+    /// <summary>请求使用的代理，null 走系统默认</summary>
+    internal static IWebProxy? Proxy;
 
     private static HttpClient CreateClient()
     {
@@ -17,6 +18,9 @@ internal static class VoiceCatalog
         {
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli
         };
+
+        if (Proxy is not null)
+            handler.Proxy = Proxy;
 
         return new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
     }
@@ -34,7 +38,8 @@ internal static class VoiceCatalog
         );
         ConfigureHeaders(request);
 
-        using var response = await Client.SendAsync
+        using var client   = CreateClient();
+        using var response = await client.SendAsync
                                          (
                                              request,
                                              HttpCompletionOption.ResponseHeadersRead,

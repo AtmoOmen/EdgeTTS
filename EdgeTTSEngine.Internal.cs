@@ -53,6 +53,7 @@ public sealed partial class EdgeTTSEngine
             if (File.Exists(cacheFile))
             {
                 Log("使用缓存的语音文件");
+                TouchCacheFile(cacheFile);
                 return cacheFile;
             }
 
@@ -91,6 +92,22 @@ public sealed partial class EdgeTTSEngine
         }
     }
 
+    /// <summary>刷新缓存使用时间</summary>
+    private void TouchCacheFile
+    (
+        string cacheFile
+    )
+    {
+        try
+        {
+            File.SetLastWriteTimeUtc(cacheFile, DateTime.UtcNow);
+        }
+        catch (Exception ex)
+        {
+            Log($"刷新缓存时间失败: {ex.Message}");
+        }
+    }
+
     private static string SanitizeString
     (
         string          text,
@@ -114,31 +131,42 @@ public sealed partial class EdgeTTSEngine
     {
         Exception? lastException = null;
 
-        for (var retry = 0; retry < 10; retry++)
-            try
-            {
-                using var ws = await EdgeTTSWebSocket.CreateWebSocketAsync(cancellationToken).ConfigureAwait(false);
-                return await AzureWSSynthesiser.SynthesisAsync
-                                               (
-                                                   ws,
-                                                   text,
-                                                   settings.Speed,
-                                                   settings.Pitch,
-                                                   100,
-                                                   settings.Voice,
-                                                   cancellationToken
-                                               )
-                                               .ConfigureAwait(false);
-            }
-            catch (Exception ex) when (IsTransientSynthesisError(ex))
-            {
-                lastException = ex;
-                if (retry == 9)
-                    break;
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(SynthesisTimeout);
+        var token = timeoutCts.Token;
 
-                Log($"语音合成失败, 正在重试 ({retry + 1}/10): {ex.Message}");
-                await Task.Delay(1000 * (retry + 1), cancellationToken).ConfigureAwait(false);
-            }
+        try
+        {
+            for (var retry = 0; retry < 10; retry++)
+                try
+                {
+                    using var ws = await EdgeTTSWebSocket.CreateWebSocketAsync(token).ConfigureAwait(false);
+                    return await AzureWSSynthesiser.SynthesisAsync
+                                                   (
+                                                       ws,
+                                                       text,
+                                                       settings.Speed,
+                                                       settings.Pitch,
+                                                       100,
+                                                       settings.Voice,
+                                                       token
+                                                   )
+                                                   .ConfigureAwait(false);
+                }
+                catch (Exception ex) when (IsTransientSynthesisError(ex))
+                {
+                    lastException = ex;
+                    if (retry == 9)
+                        break;
+
+                    Log($"语音合成失败, 正在重试 ({retry + 1}/10): {ex.Message}");
+                    await Task.Delay(1000 * (retry + 1), token).ConfigureAwait(false);
+                }
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException($"语音合成超时 ({SynthesisTimeout.TotalSeconds:0} 秒)");
+        }
 
         throw new IOException("语音合成失败, 已达到最大重试次数", lastException);
     }

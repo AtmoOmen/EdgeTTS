@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 
@@ -7,6 +8,9 @@ internal static class EdgeTTSWebSocket
 {
     internal const string CHROMIUM_FULL_VERSION = "143.0.3650.75";
     internal const string SEC_MS_GEC_VERSION    = $"2-{CHROMIUM_FULL_VERSION}";
+
+    /// <summary>连接使用的代理，null 走系统默认</summary>
+    internal static IWebProxy? Proxy;
 
     internal static readonly string ChromiumMajorVersion = CHROMIUM_FULL_VERSION.Split('.')[0];
 
@@ -42,6 +46,9 @@ internal static class EdgeTTSWebSocket
             System.Net.WebSockets.Managed.ClientWebSocket managedWs => managedWs.Options,
             _                                                       => throw new ArgumentException("Unsupported WebSocket type")
         };
+
+        if (Proxy is not null)
+            options.Proxy = Proxy;
 
         options.SetRequestHeader("Accept-Encoding",  "gzip, deflate, br");
         options.SetRequestHeader("Cache-Control",    "no-cache");
